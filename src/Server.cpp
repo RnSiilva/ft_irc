@@ -1,10 +1,9 @@
 #include "../inc/Server.hpp"
 
-// CONSTRUCTORS
 Server::Server() : socketfd(-1) {}
 Server::~Server() {}
 
-// SERVER CONFIGURATION
+// ============ SERVER CONFIGURATION ============ 
 void Server::server_start(int port, std::string pwd)
 {
     this->port = port;
@@ -12,9 +11,9 @@ void Server::server_start(int port, std::string pwd)
     create_socketfd();
 
     std::cout << "Waiting connections..." << std::endl;
-    while (Server::signal == false)
+    while (signal == false)
     {
-        if(poll(&fd_poll[0], fd_poll.size(), -1) == -1)
+        if((poll(&fd_poll[0], fd_poll.size(), -1) == -1) && signal == false)
             throw(std::runtime_error("Failed to poll."));
 
         for (size_t i = 0; i < fd_poll.size(); i++)
@@ -56,4 +55,82 @@ void Server::create_socketfd()
     new_client.events = POLLIN;
     new_client.revents = 0;
     fd_poll.push_back(new_client);
+}
+
+void Server::accept_client()
+{
+    socklen_t len = sizeof(client_addr);
+    memset(&client_addr, 0, sizeof(client_addr));
+
+    int fd = accept(socketfd, (sockaddr *)&client_addr, &len);
+    if (fd == -1)
+        throw(std::runtime_error("Failed to accept client."));
+
+    if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1)
+        throw(std::runtime_error("Failed to set option: (O_NONBLOCK)."));
+
+    Client client;
+    client.set_clientfd(fd);
+    clients.push_back(client);
+
+    new_client.fd = fd;
+    new_client.events = POLLIN;
+    new_client.revents = 0;
+    fd_poll.push_back(new_client);
+
+    std::cout << "Client " << fd << " connected!" << std::endl;
+}
+
+void Server::recvData(int fd)
+{
+    char buff[1024];
+	memset(buff, 0, sizeof(buff));
+
+	ssize_t bytes = recv(fd, buff, sizeof(buff) - 1 , 0);
+
+	if (bytes <= 0)
+    {
+		std::cout << "Client " << fd << " disconnected" << std::endl;
+		remove_client(fd);
+        close(fd);
+	}
+	else
+    {
+		buff[bytes] = '\0';
+		std::cout << "Client " << fd << " said: " << buff;
+		// Missing code to process data
+	}
+}
+
+// ============ UTILS ============ 
+void Server::close_fd()
+{
+	for (size_t i = 0; i < clients.size(); i++)
+        close(clients[i].get_clientfd());
+
+	if (socketfd != -1)
+		close(socketfd);
+
+    std::cout << "\nDisconnecting all clients and closing server..." << std::endl;
+}
+
+void Server::remove_client(int fd)
+{
+	for(std::vector<struct pollfd>::iterator it = fd_poll.begin(); it != fd_poll.end(); ++it)
+    {
+		if (it->fd == fd)
+		{
+            fd_poll.erase(it);
+            break;
+        }
+	}
+
+	for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it)
+    {
+        if (it->get_clientfd() == fd)
+        {
+            clients.erase(it);
+            break;
+        }
+    }
 }

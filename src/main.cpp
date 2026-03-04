@@ -4,7 +4,7 @@ bool Server::signal = false;
 void Server::sig_handler(int sig)
 {
 	(void)sig;
-	Server::signal = true;
+	signal = true;
 }
 
 int main(int argc, char *argv[])
