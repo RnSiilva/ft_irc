@@ -1,7 +1,7 @@
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
-SRCS = src/main.cpp src/Server.cpp src/Client.cpp
+SRCS = src/main.cpp src/Server.cpp src/Client.cpp src/Auth.cpp src/Utils.cpp
 OBJS = $(SRCS:.cpp=.o)
 NAME = ircserv
 

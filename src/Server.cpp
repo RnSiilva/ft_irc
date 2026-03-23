@@ -81,6 +81,7 @@ void Server::accept_client()
 
     Client client;
     client.set_clientfd(fd);
+    client.set_host(inet_ntoa(client_addr.sin_addr));
     clients.push_back(client);
 
     new_client.fd = fd;
@@ -117,8 +118,25 @@ void Server::recvData(int fd)
         std::string cmd = buf.substr(0, pos);
         buf.erase(0, pos + 2);
         if (!cmd.empty())
-            handle_cmd(cmd, fd); // Next: Implement this function!
+            handle_cmd(cmd, fd);
     }
+}
+
+void Server::handle_cmd(std::string &cmd, int fd)
+{
+    std::vector<std::string> args = split_cmd(cmd);
+
+    std::transform(args[0].begin(), args[0].end(), args[0].begin(), ::toupper);
+
+    if (args[0] == "PASS")
+        cmd_pass(fd, args);
+    else if (args[0] == "NICK")
+        cmd_nick(fd, args);
+    else if (args[0] == "USER")
+        cmd_user(fd, args);
+    else
+        std::cout << "Unknown command: " << args[0] << std::endl;
+        // Implement rest of the commands
 }
 
 // ============ UTILS ============ 
@@ -152,4 +170,14 @@ void Server::remove_client(int fd)
             break;
         }
     }
+}
+
+bool Server::nick_in_use(std::string &nick)
+{
+    for (size_t i = 0; i < clients.size(); i++)
+    {
+        if (clients[i].get_nick() == nick)
+            return true;
+    }
+    return false;
 }
