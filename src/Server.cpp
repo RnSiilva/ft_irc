@@ -124,7 +124,9 @@ void Server::recvData(int fd)
 
 void Server::handle_cmd(std::string &cmd, int fd)
 {
+    Client *client = get_client(fd);
     std::vector<std::string> args = split_cmd(cmd);
+    std::string nick = client->get_nick().empty() ? "*" : client->get_nick();
 
     std::transform(args[0].begin(), args[0].end(), args[0].begin(), ::toupper);
 
@@ -134,50 +136,14 @@ void Server::handle_cmd(std::string &cmd, int fd)
         cmd_nick(fd, args);
     else if (args[0] == "USER")
         cmd_user(fd, args);
+    else if (args[0] == "QUIT")
+        cmd_quit(fd, args);
+    else if (client->get_registered())
+    {
+        // Implement commands...
+        send_rpl(ERR_UNKNOWNCOMMAND(nick, args[0]), fd);
+    }
     else
-        std::cout << "Unknown command: " << args[0] << std::endl;
-        // Implement rest of the commands
+        send_rpl(ERR_NOTREGISTERED(nick), fd);
 }
 
-// ============ UTILS ============ 
-void Server::close_fd()
-{
-	for (size_t i = 0; i < clients.size(); i++)
-        close(clients[i].get_clientfd());
-
-	if (socketfd != -1)
-		close(socketfd);
-
-    std::cout << "\nDisconnecting all clients and closing server..." << std::endl;
-}
-
-void Server::remove_client(int fd)
-{
-	for(std::vector<struct pollfd>::iterator it = fd_poll.begin(); it != fd_poll.end(); ++it)
-    {
-		if (it->fd == fd)
-		{
-            fd_poll.erase(it);
-            break;
-        }
-	}
-
-	for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it)
-    {
-        if (it->get_clientfd() == fd)
-        {
-            clients.erase(it);
-            break;
-        }
-    }
-}
-
-bool Server::nick_in_use(std::string &nick)
-{
-    for (size_t i = 0; i < clients.size(); i++)
-    {
-        if (clients[i].get_nick() == nick)
-            return true;
-    }
-    return false;
-}

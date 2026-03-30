@@ -30,3 +30,45 @@ bool invalid_nick(std::string &nick)
     }
     return false;
 }
+
+bool Server::nick_in_use(std::string &nick)
+{
+    for (size_t i = 0; i < clients.size(); i++)
+    {
+        if (clients[i].get_nick() == nick)
+            return true;
+    }
+    return false;
+}
+
+void Server::remove_client(int fd)
+{
+	for(std::vector<struct pollfd>::iterator it = fd_poll.begin(); it != fd_poll.end(); ++it)
+    {
+		if (it->fd == fd)
+		{
+            fd_poll.erase(it);
+            break;
+        }
+	}
+
+	for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it)
+    {
+        if (it->get_clientfd() == fd)
+        {
+            clients.erase(it);
+            break;
+        }
+    }
+}
+
+void Server::close_fd()
+{
+	for (size_t i = 0; i < clients.size(); i++)
+        close(clients[i].get_clientfd());
+
+	if (socketfd != -1)
+		close(socketfd);
+
+    std::cout << "\nDisconnecting all clients and closing server..." << std::endl;
+}

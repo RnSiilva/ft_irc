@@ -3,9 +3,12 @@
 Client::Client()
 {
     fd = -1;
-    buffer = "";
     pwd_status = false;
+    is_registered = false;
     nick = "";
+    user = "";
+    host = "";
+    buffer = "";
 }
 Client::~Client() {}
 

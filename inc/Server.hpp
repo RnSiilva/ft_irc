@@ -47,6 +47,7 @@ class Server {
         void cmd_pass(int fd, std::vector<std::string> args);
         void cmd_nick(int fd, std::vector<std::string> args);
         void cmd_user(int fd, std::vector<std::string> args);
+        void cmd_quit(int fd, std::vector<std::string> args);
 
         // Utils
         static void sig_handler(int sig);
