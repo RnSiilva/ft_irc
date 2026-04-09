@@ -1,18 +1,21 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include <iostream>
-#include <cstdlib>
-#include <csignal>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h> 
-#include <fcntl.h>
-#include <poll.h>
-#include <vector>
-#include <cstring>
-#include <algorithm>
-#include <sstream>
+#include <iostream> //-> For terminal logs (std::cout, std::cerr)
+#include <vector> //-> for vector
+#include <sys/socket.h> //-> for socket()
+#include <sys/types.h> //-> for socket()
+#include <netinet/in.h> //-> for sockaddr_in
+#include <fcntl.h> //-> for fcntl()
+#include <unistd.h> //-> for close()
+#include <arpa/inet.h> //-> for inet_ntoa()
+#include <poll.h> //-> for poll()
+#include <csignal> //-> for signal()
+#include <cstdlib> //-> Standard functions (exit, atoi, free)
+#include <cstring> //-> Manipulating C(memset, strlen, bzero)
+#include <algorithm> //-> For utilities (std::find, std::remove)
+#include <sstream> //-> To format strings and convert data.
+
 #include "Client.hpp"
 #include "Replies.hpp"
 
@@ -20,15 +23,15 @@ class Client;
 
 class Server {
     private:
+		int port;
         int socketfd;
-        int port;
         static bool signal;
         std::string password;
+        std::vector<Client> clients;
+        std::vector<struct pollfd> fd_poll;
         struct sockaddr_in addr;
         struct pollfd new_client;
-        std::vector<struct pollfd> fd_poll;
         struct sockaddr_in client_addr;
-        std::vector<Client> clients;
     public:
         Server();
         ~Server();

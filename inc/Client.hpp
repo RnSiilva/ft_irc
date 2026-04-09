@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Client.hpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: resilva <resilva@student.42porto.com>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/04/08 19:52:09 by resilva           #+#    #+#             */
+/*   Updated: 2026/04/08 23:42:55 by resilva          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
@@ -6,10 +18,10 @@
 class Client {
     private:
         int fd;
-        std::string buffer;
-        bool pwd_status;
-        std::string nick;
         bool is_registered;
+        bool pwd_status;
+        std::string buffer;
+        std::string nick;
         std::string user;
         std::string host;
     public:
@@ -18,21 +30,21 @@ class Client {
 
         // Setters
         void set_clientfd(int fd);
-        void append_buffer(std::string buff);
-        void set_pwd_status(bool val);
         void set_registered(bool val);
+        void set_pwd_status(bool val);
+        void append_buffer(std::string buff);
         void set_nick(std::string nickname);
-        void set_host(std::string h);
         void set_user(std::string usr);
+        void set_host(std::string h);
 
         // Getters
         int get_clientfd();
-        std::string &get_buffer();
-        bool get_pwd_status();
-        std::string get_nick();
         bool get_registered();
-        std::string get_host();
+        bool get_pwd_status();
+        std::string &get_buffer();
+        std::string get_nick();
         std::string get_user();
+        std::string get_host();
 };
 
 #endif

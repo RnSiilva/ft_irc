@@ -1,10 +1,10 @@
 #include "../inc/Server.hpp"
 
-bool Server::signal = false;
+bool Server::signal = false; //-> initialize the static boolean
 void Server::sig_handler(int sig)
 {
 	(void)sig;
-	signal = true;
+	Server::signal = true; //-> set the static boolean to true to stop the server
 }
 
 int main(int argc, char *argv[])
@@ -25,9 +25,9 @@ int main(int argc, char *argv[])
 
     Server serv;
     try {
-		signal(SIGINT, Server::sig_handler);
-		signal(SIGQUIT, Server::sig_handler);
-		serv.server_start((int)port, argv[2]);
+		signal(SIGINT, Server::sig_handler); //-> catch the signal (ctrl + c)
+		signal(SIGQUIT, Server::sig_handler); //-> catch the signal (ctrl + \)
+		serv.server_start((int)port, argv[2]); //-> initialize the server
 	}
 	catch(const std::exception& e) {
 		serv.close_fd();

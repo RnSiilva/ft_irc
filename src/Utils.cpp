@@ -64,9 +64,11 @@ void Server::remove_client(int fd)
 
 void Server::close_fd()
 {
-	for (size_t i = 0; i < clients.size(); i++)
+	//-> close all the clients
+	for (size_t i = 0; i < clients.size(); i++) 
         close(clients[i].get_clientfd());
 
+	//-> close the server socket
 	if (socketfd != -1)
 		close(socketfd);
 

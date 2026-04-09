@@ -18,7 +18,7 @@ void Server::server_start(int port, std::string pwd)
 {
     this->port = port;
     password = pwd;
-    create_socketfd();
+    create_socketfd(); //-> create the server socket
 
     std::cout << "Waiting connections..." << std::endl;
     while (signal == false)
@@ -42,29 +42,36 @@ void Server::server_start(int port, std::string pwd)
 
 void Server::create_socketfd()
 {
-    socketfd = socket(AF_INET, SOCK_STREAM, 0);
-    if(socketfd == -1)
+    socketfd = socket(AF_INET, SOCK_STREAM, 0); //-> create the server socket
+    if(socketfd == -1) //-> check if the socket is created
 		throw(std::runtime_error("Failed to create socket."));
 
     int opt = 1;
+
+	//-> set the socket option (SO_REUSEADDR) to reuse the address
     if (setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
         throw(std::runtime_error("Failed to set option: (SO_REUSEADDR)."));
+
+	//-> set the socket option (O_NONBLOCK) for non-blocking socket
     if (fcntl(socketfd, F_SETFL, O_NONBLOCK) == -1)
         throw(std::runtime_error("Failed to set option: (O_NONBLOCK)."));
 
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = INADDR_ANY;
-    addr.sin_port = htons(port);
+    addr.sin_family = AF_INET; //-> set the address family to ipv4
+    addr.sin_port = htons(this->port); //-> convert the port to network byte order (big endian)
+    addr.sin_addr.s_addr = INADDR_ANY; //-> set the address to any local machine address
+
+	//-> bind the socket to the address
     if (bind(socketfd, (struct sockaddr *)&addr, sizeof(addr)) == -1)
         throw(std::runtime_error("Failed to bind socket."));
 
+	//-> listen for incoming connections and making the socket a passive socket
     if (listen(socketfd, SOMAXCONN) == -1)
         throw(std::runtime_error("Failed to listen to socket."));
 
-    new_client.fd = socketfd;
-    new_client.events = POLLIN;
-    new_client.revents = 0;
-    fd_poll.push_back(new_client);
+    new_client.fd = socketfd; //-> add the server socket to the pollfd
+    new_client.events = POLLIN; //-> set the event to POLLIN for reading data
+    new_client.revents = 0; //-> set the revents to 0
+    fd_poll.push_back(new_client); //-> add the server socket to the pollfd
 }
 
 void Server::accept_client()
