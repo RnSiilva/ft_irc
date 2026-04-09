@@ -33,3 +33,4 @@ std::string Client::get_host() { return host; }
 void Client::set_user(std::string usr) { user = usr; }
 std::string Client::get_user() { return user; }
 
+std::string Client::get_prefix() { return nick + "!" + user + "@" + host; }

@@ -45,6 +45,7 @@ class Client {
         std::string get_nick();
         std::string get_user();
         std::string get_host();
+        std::string get_prefix();
 };
 
 #endif

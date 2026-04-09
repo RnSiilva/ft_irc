@@ -18,8 +18,10 @@
 
 #include "Client.hpp"
 #include "Replies.hpp"
+#include "Channel.hpp"
 
 class Client;
+class Channel;
 
 class Server {
     private:
@@ -32,6 +34,7 @@ class Server {
         struct sockaddr_in addr;
         struct pollfd new_client;
         struct sockaddr_in client_addr;
+        std::vector<Channel> channels;
     public:
         Server();
         ~Server();
@@ -57,6 +60,8 @@ class Server {
         void remove_client(int fd);
         void close_fd();
         bool nick_in_use(std::string &nick);
+
+        Channel *get_channel(std::string name);
 };
 
 std::vector<std::string> split_cmd(std::string &cmd);

@@ -13,6 +13,16 @@ Client *Server::get_client(int fd)
 	return NULL;
 }
 
+Channel *Server::get_channel(std::string name)
+{
+    for (size_t i = 0; i < channels.size(); i++)
+    {
+        if (channels[i].get_name() == name)
+            return &channels[i];
+    }
+    return NULL;
+}
+
 // ============ SERVER CONFIGURATION ============ 
 void Server::server_start(int port, std::string pwd)
 {
