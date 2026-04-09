@@ -60,6 +60,7 @@ class Server {
         void remove_client(int fd);
         void close_fd();
         bool nick_in_use(std::string &nick);
+        void disconnect_client(int fd, std::string reason);
 
         Channel *get_channel(std::string name);
 };

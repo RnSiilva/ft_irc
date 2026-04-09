@@ -5,8 +5,20 @@ std::vector<std::string> split_cmd(std::string &cmd)
     std::vector<std::string> args;
     std::istringstream ss(cmd);
     std::string token;
+
     while (ss >> token)
+    {
+        if (token[0] == ':')
+        {
+            std::string rest;
+            std::getline(ss, rest);
+            token += rest;      // join rest of line
+            token.erase(0, 1);  // remove ':'
+            args.push_back(token);
+            break;
+        }
         args.push_back(token);
+    }
     return args;
 }
 

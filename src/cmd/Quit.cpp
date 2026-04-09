@@ -1,31 +1,39 @@
 #include "../../inc/Server.hpp"
 
-void Server::cmd_quit(int fd, std::vector<std::string> args)
+void Server::disconnect_client(int fd, std::string reason)
 {
     Client *client = get_client(fd);
 
-    if (!client->get_registered())
-    {
-        remove_client(fd);
-        close(fd);
-        return;
-    }
-
-    std::string reason = args.size() > 1 ? args[1] : "Leaving";
-    if (reason[0] == ':')
-        reason = reason.substr(1);
-    std::string msg = ":" + client->get_prefix() + " QUIT :" + reason + "\r\n";
+    std::string nick = client->get_nick().empty() ? "*" : client->get_nick();
+    std::string quit_msg = ":" + nick + " QUIT :" + reason + "\r\n";
 
     for (size_t i = 0; i < channels.size(); i++)
     {
-        if (channels[i].is_member(client))
+        Channel &channel = channels[i];
+
+        if (channel.is_member(client))
         {
-            channels[i].broadcast(msg, fd);
-            channels[i].remove_member(client);
+            channel.broadcast(quit_msg, fd);
+            channel.remove_member(client);
+
+            if (channel.is_empty())
+            {
+                channels.erase(channels.begin() + i);
+                i--;
+            }
         }
     }
 
-    send_rpl(msg, fd);
+    std::cout << "Client " << fd << " disconnected (" << reason << ")" << std::endl;
     remove_client(fd);
     close(fd);
+}
+
+void Server::cmd_quit(int fd, std::vector<std::string> args)
+{
+    std::string reason = " ";
+    if (args.size() > 1)
+        reason = args[1];
+
+    disconnect_client(fd, reason);
 }

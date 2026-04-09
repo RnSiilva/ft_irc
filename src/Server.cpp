@@ -38,7 +38,7 @@ void Server::server_start(int port, std::string pwd)
 
         for (size_t i = 0; i < fd_poll.size(); i++)
 		{
-			if (fd_poll[i].revents == POLLIN)
+			if (fd_poll[i].revents & POLLIN)
 			{
 				if (fd_poll[i].fd == socketfd)
 					accept_client();
@@ -118,9 +118,7 @@ void Server::recvData(int fd)
 
 	if (bytes <= 0)
     {
-		std::cout << "Client " << fd << " disconnected" << std::endl;
-		remove_client(fd);
-        close(fd);
+        disconnect_client(fd, "Connection lost");
         return;
 	}
 
