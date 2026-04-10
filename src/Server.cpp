@@ -5,23 +5,27 @@ Server::~Server() {}
 
 Client *Server::get_client(int fd)
 { 
-    for (size_t i = 0; i < clients.size(); i++)
-    {
-		if (clients[i].get_clientfd() == fd)
-			return &clients[i];
-	}
+    // for (size_t i = 0; i < clients.size(); i++)
+    // {
+	// 	if (clients[i].get_clientfd() == fd)
+	// 		return &clients[i];
+	// }
+	// return NULL;
+	std::map<int, Client>::iterator it = clients.find(fd);
+	if (it != clients.end())
+		return &(it->second); // Retorna o endereço do Client encontrado
 	return NULL;
 }
 
-Channel *Server::get_channel(std::string name)
-{
-    for (size_t i = 0; i < channels.size(); i++)
-    {
-        if (channels[i].get_name() == name)
-            return &channels[i];
-    }
-    return NULL;
-}
+// Channel *Server::get_channel(std::string name)
+// {
+//     for (size_t i = 0; i < channels.size(); i++)
+//     {
+//         if (channels[i].get_name() == name)
+//             return &channels[i];
+//     }
+//     return NULL;
+// }
 
 // ============ SERVER CONFIGURATION ============ 
 void Server::server_start(int port, std::string pwd)
@@ -42,8 +46,13 @@ void Server::server_start(int port, std::string pwd)
 			{
 				if (fd_poll[i].fd == socketfd)
 					accept_client();
-				else
+				else {
+					size_t current_size = fd_poll.size(); // Salva o tamanho atual
 					recvData(fd_poll[i].fd);
+
+					if (fd_poll.size() < current_size) // Se o tamanho diminuiu, um cliente saiu
+						i--; // Volta um índice para não pular o próximo cliente da lista
+				}
 			}
 		}
     }
@@ -99,7 +108,9 @@ void Server::accept_client()
     Client client;
     client.set_clientfd(fd);
     client.set_host(inet_ntoa(client_addr.sin_addr));
-    clients.push_back(client);
+
+    //clients.push_back(client);
+	clients[fd] = client;
 
     new_client.fd = fd;
     new_client.events = POLLIN;
@@ -122,7 +133,18 @@ void Server::recvData(int fd)
         return;
 	}
 
+	// if (bytes <= 0)
+    // {
+    //     std::cout << "Client " << fd << " disconnected" << std::endl;
+    //     remove_client(fd);
+    //     close(fd);
+    //     return;
+    // }
+
+
     Client *client = get_client(fd);
+	if (!client) // Segurança extra: se o cliente não existir no mapa, pare aqui.
+		return ;
     client->append_buffer(buff);
 
     std::string &buf = client->get_buffer();
@@ -153,6 +175,17 @@ void Server::handle_cmd(std::string &cmd, int fd)
         cmd_user(fd, args);
     else if (args[0] == "QUIT")
         cmd_quit(fd, args);
+	
+	else if (!client->get_registered())
+		send_rpl(ERR_NOTREGISTERED(nick), fd);
+	
+	else if (args[0] == "JOIN")
+		cmd_join(fd, args);
+	else if (args[0] == "PRIVMSG")
+        cmd_privmsg(fd, args);
+	else if (args[0] == "PART")
+		cmd_part(fd, args);
+
     else if (client->get_registered())
     {
         // Implement commands...

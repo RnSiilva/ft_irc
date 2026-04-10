@@ -3,6 +3,7 @@
 
 #include <iostream> //-> For terminal logs (std::cout, std::cerr)
 #include <vector> //-> for vector
+#include <map> //-> for map
 #include <sys/socket.h> //-> for socket()
 #include <sys/types.h> //-> for socket()
 #include <netinet/in.h> //-> for sockaddr_in
@@ -17,8 +18,8 @@
 #include <sstream> //-> To format strings and convert data.
 
 #include "Client.hpp"
-#include "Replies.hpp"
 #include "Channel.hpp"
+#include "Replies.hpp"
 
 class Client;
 class Channel;
@@ -29,12 +30,14 @@ class Server {
         int socketfd;
         static bool signal;
         std::string password;
-        std::vector<Client> clients;
-        std::vector<struct pollfd> fd_poll;
         struct sockaddr_in addr;
         struct pollfd new_client;
         struct sockaddr_in client_addr;
-        std::vector<Channel> channels;
+        std::vector<struct pollfd> fd_poll;
+
+        //std::vector<Client> clients;
+		std::map<int, Client> clients;
+        std::map<std::string, Channel> _channels;
     public:
         Server();
         ~Server();
@@ -55,14 +58,18 @@ class Server {
         void cmd_user(int fd, std::vector<std::string> args);
         void cmd_quit(int fd, std::vector<std::string> args);
 
+		void cmd_join(int fd, std::vector<std::string> args);
+		void cmd_privmsg(int fd, std::vector<std::string> args);
+		void cmd_part(int fd, std::vector<std::string> args);
+
         // Utils
         static void sig_handler(int sig);
         void remove_client(int fd);
         void close_fd();
         bool nick_in_use(std::string &nick);
         void disconnect_client(int fd, std::string reason);
-
-        Channel *get_channel(std::string name);
+		
+		//Channel *get_channel(std::string name);
 };
 
 std::vector<std::string> split_cmd(std::string &cmd);
