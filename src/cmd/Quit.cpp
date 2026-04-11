@@ -13,6 +13,9 @@ void Server::disconnect_client(int fd, std::string reason)
     while (it != _channels.end()) {
         Channel &channel = it->second;
 
+		if (channel.isInvited(fd))
+			channel.removeInvite(fd);
+
         if (channel.isClientInChannel(fd))
         {
 			// 1. Avisa os outros membros do canal que o cliente saiu
@@ -22,7 +25,7 @@ void Server::disconnect_client(int fd, std::string reason)
             channel.removeMember(fd);
 
 			// 3. Se o canal ficou vazio, ele deve ser deletado
-            if (channel.getMemberList().empty())
+            if (channel.getMembers().empty())
             {
 				// No C++98, erase(it++) é o truque para deletar e avançar o iterador com segurança
                 _channels.erase(it++);

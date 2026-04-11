@@ -38,6 +38,16 @@ void Channel::removeMember(int fd)
     // If they leave, they also lose op and invite status
     removeOperator(fd);
     //remove_invited(client);
+
+	// Nova Regra: Se a lista de operadores ficou vazia MAS ainda há membros...
+	if (_operators.empty() && !_members.empty()) {
+		// Promove o próximo membro disponível a operador
+		addOperator(_members[0]);
+
+		// Notifica o canal sobre o novo operador (Opcional)
+		std::string msg = ":" + _members[0]->get_nick() + " MODE " + _name + " +o " + _members[0]->get_nick() + "\r\n";
+		broadcast(msg);
+	}
 }
 
 bool Channel::isClientInChannel(int fd)
@@ -106,7 +116,7 @@ std::string Channel::getMemberList()
 // // ============================================================
 
 // // ============ SETTERS ============
-// void Channel::set_topic(std::string t)  { topic = t; }
+void Channel::setTopic(std::string t)  { _topic = t; }
 // void Channel::set_key(std::string k)    { key = k; }
 // void Channel::set_user_limit(int limit) { user_limit = limit; }
 // void Channel::set_mode_i(bool val)      { mode_i = val; }
@@ -115,37 +125,37 @@ std::string Channel::getMemberList()
 // void Channel::set_mode_l(bool val)      { mode_l = val; }
 
 // // ============ MEMBER MANAGEMENT ============
-// void Channel::add_invited(Client *client)
-// {
-//     if (!is_invited(client))
-//         invited.push_back(client);
-// }
+void Channel::addInvite(int fd)
+{
+    if (!isInvited(fd))
+        _invitedFds.push_back(fd);
+}
 
-// void Channel::remove_invited(Client *client)
-// {
-//     for (std::vector<Client *>::iterator it = invited.begin(); it != invited.end(); ++it)
-//     {
-//         if (*it == client)
-//         {
-//             invited.erase(it);
-//             break;
-//         }
-//     }
-// }
+bool Channel::isInvited(int fd)
+{
+    for (size_t i = 0; i < _invitedFds.size(); i++)
+        if (_invitedFds[i] == fd)
+            return true;
+    return false;
+}
+
+void Channel::removeInvite(int fd)
+{
+    for (std::vector<int>::iterator it = _invitedFds.begin(); it != _invitedFds.end(); ++it)
+    {
+        if (*it == fd)
+        {
+            _invitedFds.erase(it);
+            break;
+        }
+    }
+}
 
 // // ============ CHECKS ============
 // bool Channel::is_member(Client *client) // isClientInChannel
 // {
 //     for (size_t i = 0; i < members.size(); i++)
 //         if (members[i] == client)
-//             return true;
-//     return false;
-// }
-
-// bool Channel::is_invited(Client *client)
-// {
-//     for (size_t i = 0; i < invited.size(); i++)
-//         if (invited[i] == client)
 //             return true;
 //     return false;
 // }

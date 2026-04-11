@@ -62,6 +62,10 @@ class Server {
 		void cmd_privmsg(int fd, std::vector<std::string> args);
 		void cmd_part(int fd, std::vector<std::string> args);
 
+		void cmd_kick(int fd, std::vector<std::string> args);
+		void cmd_invite(int fd, std::vector<std::string> args);
+		void cmd_topic(int fd, std::vector<std::string> args);
+
         // Utils
         static void sig_handler(int sig);
         void remove_client(int fd);
