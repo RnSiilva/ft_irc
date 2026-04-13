@@ -43,7 +43,7 @@ void Server::cmd_part(int fd, std::vector<std::string> args)
 		chan.removeMember(fd);
 
 		// 5. Autolimpeza: se o canal ficou vazio, remove do servidor
-		if(chan.getMemberList().empty())
+		if(chan.getMembers().empty())
 			_channels.erase(channelName);
 	}
 }

@@ -14,6 +14,14 @@
 // (366) - Indica que a lista de nomes terminou
 #define RPL_ENDOFNAMES(nick, channel) "366 " + nick + " " + channel + " :End of /NAMES list\r\n"
 
+#define RPL_INVITING(nick, target, channel) "341 " + nick + " " + target + " " + channel + "\r\n"
+
+// RPL_NOTOPIC (331) - Quando o canal não tem assunto definido
+#define RPL_NOTOPIC(nick, channel) "331 " + nick + " " + channel + " :No topic is set\r\n"
+
+// RPL_TOPIC (332) - Para mostrar o tópico atual (já temos, mas confirme se está assim)
+#define RPL_TOPIC(nick, channel, topic) "332 " + nick + " " + channel + " :" + topic + "\r\n"
+
 
 
 // ERR
@@ -27,7 +35,7 @@
 #define ERR_UNKNOWNCOMMAND(client, cmd) "421 " + client + " " + cmd + " :Unknown command\r\n"
 
 // (412) - Nenhuma mensagem para enviar
-#define ERR_NOTEXTTOSEND(nick) "412" + nick + " :No text to send\r\n"
+#define ERR_NOTEXTTOSEND(nick) "412 " + nick + " :No text to send\r\n"
 
 #define ERR_CANNOTSENDTOCHAN(nick, target) "404 " + nick + " " + target + " :Cannot send to channel\r\n"
 
@@ -36,5 +44,11 @@
 #define ERR_NOSUCHCHANNEL(nick, channel) "403 " + nick + " " + channel + " :No such channel\r\n"
 
 #define ERR_NOTONCHANNEL(nick, channel) "442 " + nick + " " + channel + " :You're not on that channel\r\n"
+
+#define ERR_CHANOPRIVSNEEDED(nick, channel) "482 " + nick + " " + channel + " :You're not channel operator\r\n"
+
+#define ERR_USERNOTINCHANNEL(nick, target, channel) "441 " + nick + " " + target + " " + channel + " :They aren't on that channel\r\n"
+
+#define ERR_USERONCHANNEL(nick, target, channel) "443 " + nick + " " + target + " " + channel + " :is already on channel\r\n"
 
 #endif

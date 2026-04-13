@@ -18,7 +18,7 @@ CXX = c++
 RM = rm -f
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -g
 DN = /dev/null 2>&1
-SRC = src/main.cpp src/Server.cpp src/Client.cpp src/Auth.cpp src/Utils.cpp src/Channel.cpp src/cmd/Quit.cpp src/cmd/Join.cpp src/cmd/Privmsg.cpp src/cmd/Part.cpp
+SRC = src/main.cpp src/Server.cpp src/Client.cpp src/Auth.cpp src/Utils.cpp src/Channel.cpp src/cmd/Quit.cpp src/cmd/Join.cpp src/cmd/Privmsg.cpp src/cmd/Part.cpp src/cmd/Kick.cpp src/cmd/Invite.cpp src/cmd/Topic.cpp
 
 OBJ = ${SRC:.cpp=.o}
 
@@ -43,28 +43,3 @@ fclean: clean
 re: fclean all
 
 .PHONY: all clean fclean re
-
-
-
-# CXX = c++
-# CXXFLAGS = -Wall -Wextra -Werror -std=c++98
-
-# OBJS = $(SRCS:.cpp=.o)
-# NAME = ircserv
-
-# all: $(NAME)
-
-# $(NAME): $(OBJS)
-# 	$(CXX) $(CXXFLAGS) -o $@ $^
-
-# %.o: %.cpp
-# 	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-# clean:
-# 	rm -f $(OBJS)
-
-# fclean: clean
-# 	rm -f $(NAME)
-
-# re: fclean all
-

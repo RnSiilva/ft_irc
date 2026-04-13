@@ -186,6 +186,13 @@ void Server::handle_cmd(std::string &cmd, int fd)
 	else if (args[0] == "PART")
 		cmd_part(fd, args);
 
+	else if (args[0] == "KICK")
+		cmd_kick(fd, args);
+	else if (args[0] == "INVITE")
+		cmd_invite(fd, args);
+	else if (args[0] == "TOPIC")
+		cmd_topic(fd, args);
+
     else if (client->get_registered())
     {
         // Implement commands...

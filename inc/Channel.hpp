@@ -20,7 +20,7 @@ class Channel {
 		// As listas de quem está lá dentro
         std::vector<Client *> _members;
         std::vector<Client *> _operators;
-        // std::vector<Client *> invited;
+        std::vector<int> _invitedFds;
 
 
     public:
@@ -52,6 +52,11 @@ class Channel {
 		// Utils
         std::string getMemberList();
 
+        // // Member management
+        void addInvite(int fd);
+        void removeInvite(int fd);
+        bool isInvited(int fd);
+
 		// // Getters
         // int         get_user_limit();
         // bool        get_mode_i();
@@ -68,13 +73,8 @@ class Channel {
         // void set_mode_k(bool val);
         // void set_mode_l(bool val);
  
-        // // Member management
-        // void add_invited(Client *client);
-        // void remove_invited(Client *client);
- 
         // // Checks
         // bool is_member(Client *client);
-        // bool is_invited(Client *client);
         // bool is_empty();
 
 };
