@@ -3,64 +3,45 @@
 void	Server::cmd_join(int fd, std::vector<std::string> args)
 {
 	Client *client = get_client(fd);
+	// if (!client)
+	// 	return;
 	std::string nick = client->get_nick();
 
-	// 1. Validação de parâmetros
 	if (args.size() < 2) {
 		send_rpl(ERR_NEEDMOREPARAMS(nick, "JOIN"), fd);
 		return ;
 	}
 
-    // 2. Extrair nome (ex: #c1) e suporte a múltiplos canais (ex: JOIN #c1,#c2)
-	std::stringstream ss_chan(args[1]);
-	std::string channelName;
+ 	// 1. Parsing de canais e senhas
+	std::vector<std::string> chans = ft_split(args[1], ',');
+	std::vector<std::string> keys;
+	if (args.size() > 2)
+		keys = ft_split(args[2], ',');
 
-	// Suporte a senhas (Opcional agora, mas bom ter no radar)
-    std::stringstream ss_key("");
-    if (args.size() > 2) ss_key.str(args[2]);
-    std::string key;
+	// 2. Loop principal
+	for (size_t i = 0; i < chans.size(); ++i) {
+		std::string chanName = chans[i];
+		std::string key = (i < keys.size()) ? keys[i] : "";
 
-	while (std::getline(ss_chan, channelName, ','))
-	{
-		// Garante que o nome comece com #
-		if (channelName[0] != '#')
-			channelName = '#' + channelName;
-
-		// 3. Lógica de criação/entrada
-		if (_channels.find(channelName) == _channels.end()) {
-			// Canal novo: Cria e define o primeiro como Operador
-			Channel newChannel(channelName);
-			_channels.insert(std::make_pair(channelName, newChannel));
-		
-			_channels.at(channelName).addMember(client);
-			_channels.at(channelName).addOperator(client);
-		} else {
-			// Canal existente: Apenas entra
-			// Aqui futuramente checaremos MODE +i, +k, +l
-			_channels.at(channelName).addMember(client);
+		// Validação básica de nome
+		if (chanName[0] != '#' || chanName.length() > 50 || chanName.length() < 2) {
+			send_rpl(ERR_NOSUCHCHANNEL(nick, chanName), fd);
+			continue ;
 		}
+		
+		// 3. Lógica de criação/entrada
+		if (_channels.find(chanName) == _channels.end())
+			createChannel(chanName, client);
+
+		Channel &chan = _channels.at(chanName);
+		
+		// 4. Verificação de permissões
+		int error = chan.checkCanJoin(client, key);
+		if (error != 0) {
+			sendJoinError(fd, error, chanName, nick);
+		}
+
+		// 5. Execução da entrada e Broadcast
+		executeJoinActions(client, chan, nick, fd);
 	}
-
-	// TUDO ISSO DEVE ESTAR DENTRO DO WHILE
-	Channel &chan = _channels.at(channelName);
-
-	// 4. Broadcast: :nick!user@host JOIN #canal
-    // Avisa a TODO MUNDO do canal (inclusive quem entrou)
-	std::string joinMsg = ":" + client->get_prefix() + " JOIN " + channelName + "\r\n";
-	chan.broadcast(joinMsg);
-
-	// 5. INFORMAÇÕES DO CANAL (O que o cliente precisa para abrir a aba)
-    // Topic
-	std::string topic = chan.getTopic();
-	if (topic.empty())
-		send_rpl(RPL_TOPIC(nick, channelName, "No Topic is set"), fd);
-    else
-		send_rpl(RPL_TOPIC(nick, channelName, topic), fd);
-	
-	// Manda a lista: "353 nick = #canal :@OpUser Member2 Member3"
-    send_rpl(RPL_NAMREPLY(nick, channelName, chan.getMemberList()), fd);
-
-    // 4. RPL_ENDOFNAMES (366)
-    // Fecha a lista de nomes: "366 nick #canal :End of /NAMES list"
-    send_rpl(RPL_ENDOFNAMES(nick, channelName), fd);
 }

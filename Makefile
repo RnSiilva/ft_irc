@@ -18,7 +18,7 @@ CXX = c++
 RM = rm -f
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -g
 DN = /dev/null 2>&1
-SRC = src/main.cpp src/Server.cpp src/Client.cpp src/Auth.cpp src/Utils.cpp src/Channel.cpp src/cmd/Quit.cpp src/cmd/Join.cpp src/cmd/Privmsg.cpp src/cmd/Part.cpp src/cmd/Kick.cpp src/cmd/Invite.cpp src/cmd/Topic.cpp
+SRC = src/main.cpp src/Server.cpp src/Client.cpp src/Auth.cpp src/Utils.cpp src/Channel.cpp src/cmd/Quit.cpp src/cmd/Join.cpp src/cmd/Privmsg.cpp src/cmd/Part.cpp src/cmd/Kick.cpp src/cmd/Invite.cpp src/cmd/Topic.cpp src/cmd/Mode.cpp
 
 OBJ = ${SRC:.cpp=.o}
 

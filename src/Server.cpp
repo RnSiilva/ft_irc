@@ -1,7 +1,32 @@
 #include "../inc/Server.hpp"
 
-Server::Server() : socketfd(-1) {}
+Server::Server() : socketfd(-1)
+{
+	initHostname();
+}
 Server::~Server() {}
+
+void Server::initHostname()
+{
+	char hostname[256];
+	struct hostent *host_info;
+
+	if (gethostname(hostname, sizeof(hostname)) == 0) {
+		host_info = gethostbyname(hostname);
+		if (host_info == NULL) {
+			_hostname = "localhost";
+			_ip = "127.0.0.1";
+		}
+		else {
+			_hostname = hostname;
+			_ip = inet_ntoa(*(struct in_addr *)host_info->h_addr);
+		}	
+	}
+	else {
+		_hostname = "localhost";
+		_ip = "127.0.0.1";
+	}
+}
 
 Client *Server::get_client(int fd)
 { 
@@ -17,6 +42,63 @@ Client *Server::get_client(int fd)
 	return NULL;
 }
 
+Client *Server::get_client_by_nick(std::string nick)
+{
+	std::map<int, Client>::iterator it;
+	for (it = clients.begin(); it != clients.end(); ++it) {
+		if (it->second.get_nick() == nick)
+			return &(it->second);
+	}
+	return NULL;
+}
+
+void Server::createChannel(const std::string &name, Client *owner) {
+	Channel newChannel(name);
+	_channels.insert(std::make_pair(name, newChannel));
+
+	// Acessando o canal recém criado para configurar
+	Channel &chan = _channels.at(name);
+	chan.addMember(owner);
+	chan.addOperator(owner);
+}
+
+void Server::sendJoinError(int fd, int code, const std::string &chanName, const std::string &nick) {
+    switch (code) {
+        case 473:
+            send_rpl(ERR_INVITEONLYCHAN(nick, chanName), fd);
+            break;
+        case 475:
+            send_rpl(ERR_BADCHANNELKEY(nick, chanName), fd);
+            break;
+        case 471:
+            send_rpl(ERR_CHANNELISFULL(nick, chanName), fd);
+            break;
+    }
+}
+
+void Server::executeJoinActions(Client* client, Channel &chan, const std::string &nick, int fd) {
+    std::string chanName = chan.getName();
+
+    // 1. Adiciona o membro e limpa convite se houver
+    chan.addMember(client);
+    if (chan.isInvited(fd))
+        chan.removeInvite(fd);
+
+    // 2. Broadcast para o canal (Avisa todo mundo, inclusive o próprio client)
+    std::string joinMsg = ":" + client->get_prefix() + " JOIN " + chanName + "\r\n";
+    chan.broadcast(joinMsg);
+
+    // 3. Envia o Tópico
+    if (!chan.getTopic().empty())
+        send_rpl(RPL_TOPIC(nick, chanName, chan.getTopic()), fd);
+    else
+        send_rpl(RPL_TOPIC(nick, chanName, "No topic is set"), fd);
+
+    // 4. Envia a lista de nomes (RPL_NAMREPLY + RPL_ENDOFNAMES)
+    send_rpl(RPL_NAMREPLY(nick, chanName, chan.getMemberList()), fd);
+    send_rpl(RPL_ENDOFNAMES(nick, chanName), fd);
+}
+
 // Channel *Server::get_channel(std::string name)
 // {
 //     for (size_t i = 0; i < channels.size(); i++)
@@ -28,13 +110,25 @@ Client *Server::get_client(int fd)
 // }
 
 // ============ SERVER CONFIGURATION ============ 
+
+void Server::serverInfo(void)
+{
+	std::cout << "\t--Welcome to the IRC server!--" << std::endl;
+	std::cout << std::left << std::setw(20) << "\t Server hostname: " << _hostname << std::endl;
+	std::cout << std::left << std::setw(20) << "\t Server IP: " << _ip << std::endl;
+	std::cout << std::left << std::setw(20) << "\t Server port: " << port << std::endl;
+	std::cout << std::left << std::setw(20) << "\t Server password: " << password << std::endl << std::endl;
+	std::cout << "Waiting connections..." << std::endl;
+}
+
 void Server::server_start(int port, std::string pwd)
 {
     this->port = port;
     password = pwd;
     create_socketfd(); //-> create the server socket
 
-    std::cout << "Waiting connections..." << std::endl;
+	serverInfo();
+    // std::cout << "Waiting connections..." << std::endl;
     while (signal == false)
     {
         if((poll(&fd_poll[0], fd_poll.size(), -1) == -1) && signal == false)
@@ -59,7 +153,7 @@ void Server::server_start(int port, std::string pwd)
     close_fd();
 }
 
-void Server::create_socketfd()
+void Server::create_socketfd(void)
 {
     socketfd = socket(AF_INET, SOCK_STREAM, 0); //-> create the server socket
     if(socketfd == -1) //-> check if the socket is created
@@ -93,7 +187,7 @@ void Server::create_socketfd()
     fd_poll.push_back(new_client); //-> add the server socket to the pollfd
 }
 
-void Server::accept_client()
+void Server::accept_client(void)
 {
     socklen_t len = sizeof(client_addr);
     memset(&client_addr, 0, sizeof(client_addr));
@@ -192,6 +286,9 @@ void Server::handle_cmd(std::string &cmd, int fd)
 		cmd_invite(fd, args);
 	else if (args[0] == "TOPIC")
 		cmd_topic(fd, args);
+
+	else if (args[0] == "MODE")
+		cmd_mode(fd, args);
 
     else if (client->get_registered())
     {

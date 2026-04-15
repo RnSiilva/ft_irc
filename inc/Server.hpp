@@ -16,6 +16,8 @@
 #include <cstring> //-> Manipulating C(memset, strlen, bzero)
 #include <algorithm> //-> For utilities (std::find, std::remove)
 #include <sstream> //-> To format strings and convert data.
+#include <iomanip>
+#include <netdb.h> //gethostbyname()
 
 #include "Client.hpp"
 #include "Channel.hpp"
@@ -30,6 +32,8 @@ class Server {
         int socketfd;
         static bool signal;
         std::string password;
+		std::string _hostname;
+		std::string _ip;
         struct sockaddr_in addr;
         struct pollfd new_client;
         struct sockaddr_in client_addr;
@@ -43,14 +47,17 @@ class Server {
         ~Server();
 
         // Configs
+		void initHostname(void);
         void server_start(int port, std::string pwd);
-        void create_socketfd();
-        void accept_client();
+		void serverInfo(void);
+        void create_socketfd(void);
+        void accept_client(void);
         void recvData(int fd);
         void handle_cmd(std::string &cmd, int fd);
 
         // Getters
         Client *get_client(int fd);
+		Client *get_client_by_nick(std::string nick);
 
         // CMDS
         void cmd_pass(int fd, std::vector<std::string> args);
@@ -66,17 +73,24 @@ class Server {
 		void cmd_invite(int fd, std::vector<std::string> args);
 		void cmd_topic(int fd, std::vector<std::string> args);
 
+		void cmd_mode(int fd, std::vector<std::string> args);
+
         // Utils
         static void sig_handler(int sig);
         void remove_client(int fd);
         void close_fd();
         bool nick_in_use(std::string &nick);
         void disconnect_client(int fd, std::string reason);
+
+		void createChannel(const std::string &name, Client *owner);
+		void sendJoinError(int fd, int code, const std::string &chanName, const std::string &nick);
+		void executeJoinActions(Client* client, Channel &chan, const std::string &nick, int fd);
 		
 		//Channel *get_channel(std::string name);
 };
 
 std::vector<std::string> split_cmd(std::string &cmd);
+std::vector<std::string> ft_split(const std::string &s, char delimiter);
 void send_rpl(std::string rpl, int fd);
 bool invalid_nick(std::string &nick);
 
