@@ -18,6 +18,8 @@ bool		Channel::hasMode(char mode) const {
 	if (mode == 't') return _modeTopic;
 	if (mode == 'k') return _modeKey;
 	if (mode == 'l') return _modeLimit;
+	//if (mode == 'o') return _modeOp;
+
 	return false;
 }
 
@@ -26,7 +28,9 @@ std::string Channel::getModes() const {
 	if (_modeInvite)	modes += "i";
 	if (_modeTopic)		modes += "t";
 	if (_modeKey)		modes += "k";
-	//
+	//if (_modeLimit)		modes += "l";
+	//if(_modeOp)			modes += "o";
+
 	return modes;
 }
 

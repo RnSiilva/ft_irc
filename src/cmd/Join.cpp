@@ -39,6 +39,7 @@ void	Server::cmd_join(int fd, std::vector<std::string> args)
 		int error = chan.checkCanJoin(client, key);
 		if (error != 0) {
 			sendJoinError(fd, error, chanName, nick);
+			continue ;
 		}
 
 		// 5. Execução da entrada e Broadcast

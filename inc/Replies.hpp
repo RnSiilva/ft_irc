@@ -54,4 +54,7 @@
 #define ERR_CHANNELISFULL(nick, channel) ":ircserv 471 " + nick + " " + channel + " :Cannot join channel (+l)\r\n"
 
 #define ERR_INVITEONLYCHAN(nick, channel) ":ircserv 473 " + nick + " " + channel + " :Cannot join channel (+i)\r\n"
+
+#define ERR_UNKNOWNMODE(nick, mode) ":ircserv 472 " + nick + " " + mode + " :is unknown mode char to me\r\n"
+
 #endif

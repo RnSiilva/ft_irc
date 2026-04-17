@@ -1,21 +1,31 @@
 #include "../../inc/Server.hpp"
 
+static void updateAppliedChanges(std::string &changes, bool adding, char mode)
+{
+	char last_sign = '\0';
+	for (size_t i = 0; i < changes.length(); i++) {
+		if (changes[i] == '+' || changes[i] == '-')
+			last_sign = changes[i];
+	}
+
+	char current_sign = adding ? '+' : '-';
+	if (last_sign != current_sign)
+		changes += current_sign;
+	changes += mode;
+}
+
 void Server::cmd_mode(int fd, std::vector<std::string> args)
 {
 	Client *client = get_client(fd);
+	//if (!client) return;
 	std::string nick = client->get_nick();
 
-	// 1. Validação mínima
 	if (args.size() < 2) {
 		send_rpl(ERR_NEEDMOREPARAMS(nick, "MODE"), fd);
 		return ;
 	}
 
 	std::string target = args[1];
-
-	// Ignoramos MODE para usuários (se o target não começar com #)
-	if (target[0] != '#') return;
-
 	if (_channels.find(target) == _channels.end()) {
 		send_rpl(ERR_NOSUCHCHANNEL(nick, target), fd);
 		return ;
@@ -23,84 +33,111 @@ void Server::cmd_mode(int fd, std::vector<std::string> args)
 
 	Channel &chan = _channels.at(target);
 
-	// 2. Se só enviou o nome do canal, ele quer VER os modos (RPL_CHANNELMODEIS)
+	// 1. Se só enviou o nome do canal, quer VER os modos (RPL_CHANNELMODEIS)
 	if (args.size() == 2) {
-		send_rpl("324 " + nick + " " + target + " :+" + chan.getModes() + "\r\n", fd );
+		send_rpl(":ircserv 324 " + nick + " " + target + " +" + chan.getModes() + "\r\n", fd );
 		return ;
 	}
 
-	// 3. Verificação de Operador (Só Ops mudam modos)
+	// 2. Verificação de Operador (Só Ops mudam modos)
 	if (!chan.isOperator(fd)) {
 		send_rpl(ERR_CHANOPRIVSNEEDED(nick, target), fd);
 		return ;
 	}
 
-	// 4. O Coração do MODE: Parsing das Flags
+	// 3. O Coração do MODE: Parsing das Flags
 	std::string modes = args[2];
-	size_t param_idx = 3; // Os parâmetros extras (se houver) começam no args[3]
+	size_t param_idx = 3; // Os parâmetros extras (se houver)
 	bool adding = true; // Controla se estamos em modo + ou -
-	std::string applied_flags = ""; // Para o broadcast final
-	std::string applied_params = "";
+	std::string changesStr = ""; // Para o broadcast final
+	std::string paramsStr = "";
 
 	for (size_t i = 0; i < modes.length(); i++) {
 		char c = modes[i];
 		if (c == '+') { adding = true; continue; }
 		if (c == '-') { adding = false; continue; }
 
-		if (c == 'i' || c == 't' || c == 'k') {
-			// Adiciona o sinal apenas se ele mudou ou se é a primeira flag
-			char symbol = (adding ? '+' : '-');
-			// if (applied_flags.empty() || applied_flags[applied_flags.length() - 1] != symbol) {
-			// 	applied_flags += symbol;
-			// }
-			if (applied_flags.find(symbol) == std::string::npos || (i > 0 && modes[i-1] != '+' && modes[i-1] != '-'))
-				applied_flags += symbol;
+		// if (c == 'i' || c == 't' || c == 'k') {
+		// 	// Adiciona o sinal apenas se ele mudou ou se é a primeira flag
+		// 	char symbol = (adding ? '+' : '-');
+		// 	// if (changesStr.empty() || changesStr[changesStr.length() - 1] != symbol) {
+		// 	// 	changesStr += symbol;
+		// 	// }
+		// 	if (changesStr.find(symbol) == std::string::npos || (i > 0 && modes[i-1] != '+' && modes[i-1] != '-'))
+		// 		changesStr += symbol;
 			
-			applied_flags += c;
+		// 	changesStr += c;
+		// }
+
+		if (i == 0 && c != '+' && c != '-') {
+			send_rpl(ERR_UNKNOWNMODE(nick, c), fd);
+			continue;
 		}
-		if (c == 'i') chan.setModeInvite(adding); // true para +, false para -
-		else if (c == 't') chan.setModeTopic(adding);
+		if (modes[0] != '+' && modes[0] != '-') {
+			send_rpl(ERR_UNKNOWNMODE(nick, c), fd);
+			continue;
+		}
+		if (c == 'i') {
+			if (chan.hasMode('i') != adding) {
+				chan.setModeInvite(adding); // true para +, false para -
+				updateAppliedChanges(changesStr, adding, 'i');
+			}
+		} 
+		else if (c == 't') {
+			if (chan.hasMode('t') != adding) {
+				chan.setModeTopic(adding);
+				updateAppliedChanges(changesStr, adding, 't');
+			}
+		}
 		else if (c == 'k') {
 			if (adding) {
-				// Precisamos de um parâmetro extra!
 				if (param_idx < args.size()) {
 					std::string newKey = args[param_idx++];
-					chan.setKey(newKey);
-					chan.setModeKey(true);
-					applied_params += " " + newKey; // Para o broadcast
+					// Só muda se a senha for diferente da atual
+                    if (chan.getKey() != newKey) {
+						chan.setKey(newKey);
+						chan.setModeKey(true);
+						updateAppliedChanges(changesStr, true, 'k');
+						paramsStr += " " + newKey; // Para o broadcast
+					}
 				} else {
 					send_rpl(ERR_NEEDMOREPARAMS(nick, "MODE +k"), fd);
-					applied_flags.erase(applied_flags.end() -1);
+					//changesStr.erase(changesStr.end() -1);
 					continue ;
 				}
 			} else {
-				chan.setKey("");
-				chan.setModeKey(false);
+				if (chan.hasMode('k')) {
+					chan.setKey("");
+					chan.setModeKey(false);
+					updateAppliedChanges(changesStr, false, 'k');
+				}
 			}
 		}
 		else if (c == 'l') {
 			if (adding) {
 				if (param_idx < args.size()) {
-					int newLimit = std::atoi(args[param_idx++].c_str());
-					if (newLimit > 0) {
-						chan.setLimit(static_cast<size_t>(newLimit));
-						chan.setModeLimit(true);
-
-						if (applied_flags.empty() || applied_flags[applied_flags.size() - 1] != '+')
-							applied_flags += 'l';
-		
-						applied_params += " " + args[param_idx];
+					std::string val = args[param_idx++];
+					// Só muda se o limite for diferente do atual
+					int newLimit = std::atoi(val.c_str());
+					if (newLimit == 0) {
+						send_rpl(ERR_NEEDMOREPARAMS(nick, "MODE +l"), fd);
+						continue ;
 					}
-					param_idx++;
+					else if (newLimit > 0 && (size_t)newLimit != chan.getLimit()) {
+						chan.setLimit(newLimit);
+						chan.setModeLimit(true);
+						updateAppliedChanges(changesStr, true, 'l');
+						paramsStr += " " + val;
+					}
 				} else {
 					send_rpl(ERR_NEEDMOREPARAMS(nick, "MODE +l"), fd);
 					continue;
 				}
 			} else {
-				chan.setModeLimit(false);
-				if (applied_flags.empty() || applied_flags[applied_flags.size() - 1] != '-')
-                    applied_flags += "-";
-                applied_flags += "l";
+				if (chan.hasMode('l')) {
+					chan.setModeLimit(false);
+					updateAppliedChanges(changesStr, false, 'l');
+				}
 			}
 		}
 		else if (c == 'o') {
@@ -115,29 +152,33 @@ void Server::cmd_mode(int fd, std::vector<std::string> args)
 				}
 				// 2. O usuário alvo está no canal?
 				else if (!chan.isClientInChannel(targetClient->get_clientfd())) {
-					send_rpl("441 " + nick + " " + targetNick + " " + target + " :They aren't on that channel\r\n", fd);
+					send_rpl(ERR_USERNOTINCHANNEL(nick, targetNick, target), fd);
 					continue;
 				}
 				// 3. Execução
 				else {
-					if (adding) {
-						chan.addOperator(targetClient);
-					} else {
-						chan.removeOperator(targetClient->get_clientfd());
+					bool isOp = chan.isOperator(targetClient->get_clientfd());
+					if (isOp != adding) {
+						if (adding) chan.addOperator(targetClient);
+						else chan.removeOperator(targetClient->get_clientfd());
+
+						updateAppliedChanges(changesStr, adding, 'o');
+						paramsStr += " " + targetNick;
 					}
-					applied_flags += (adding ? "+" : "-");
-					applied_params += "o";
-					applied_params += " " + targetNick;
 				}
 			} else {
 				send_rpl(ERR_NEEDMOREPARAMS(nick, "MODE +o"), fd);
 				continue;
 			}
 		}
+		else {
+			send_rpl(ERR_UNKNOWNMODE(nick, std::string(1, c)), fd);
+			continue;
+		}
 	}
 
-	if (!applied_flags.empty()) {
-		std::string modeMsg = ":" + client->get_prefix() + " MODE " + target + " " + applied_flags + applied_params + "\r\n";
+	if (!changesStr.empty()) {
+		std::string modeMsg = ":" + client->get_prefix() + " MODE " + target + " " + changesStr + paramsStr + "\r\n";
 		chan.broadcast(modeMsg);
 	}
 }
