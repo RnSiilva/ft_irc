@@ -35,7 +35,18 @@ void Server::cmd_mode(int fd, std::vector<std::string> args)
 
 	// 1. Se só enviou o nome do canal, quer VER os modos (RPL_CHANNELMODEIS)
 	if (args.size() == 2) {
-		send_rpl(":ircserv 324 " + nick + " " + target + " +" + chan.getModes() + "\r\n", fd );
+		std::string modes = chan.getModes();
+		std::string params = "";
+
+		if (chan.hasMode('k'))
+			params += " " + chan.getKey();
+		if (chan.hasMode('l')) {
+			std::stringstream ss;
+			ss << chan.getLimit();
+			params += " " + ss.str();
+		}
+
+		send_rpl(RPL_CHANNELMODEIS(nick, target, modes, params), fd );
 		return ;
 	}
 
@@ -69,10 +80,10 @@ void Server::cmd_mode(int fd, std::vector<std::string> args)
 		// 	changesStr += c;
 		// }
 
-		if (i == 0 && c != '+' && c != '-') {
-			send_rpl(ERR_UNKNOWNMODE(nick, c), fd);
-			continue;
-		}
+		// if (i == 0 && c != '+' && c != '-') {
+		// 	send_rpl(ERR_UNKNOWNMODE(nick, c), fd);
+		// 	continue;
+		// }
 		if (modes[0] != '+' && modes[0] != '-') {
 			send_rpl(ERR_UNKNOWNMODE(nick, c), fd);
 			continue;

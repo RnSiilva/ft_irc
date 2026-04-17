@@ -92,7 +92,7 @@ void Server::executeJoinActions(Client* client, Channel &chan, const std::string
     if (!chan.getTopic().empty())
         send_rpl(RPL_TOPIC(nick, chanName, chan.getTopic()), fd);
     else
-        send_rpl(RPL_TOPIC(nick, chanName, "No topic is set"), fd);
+        send_rpl(RPL_NOTOPIC(nick, chanName), fd);
 
     // 4. Envia a lista de nomes (RPL_NAMREPLY + RPL_ENDOFNAMES)
     send_rpl(RPL_NAMREPLY(nick, chanName, chan.getMemberList()), fd);

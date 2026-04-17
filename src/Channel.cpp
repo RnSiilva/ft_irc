@@ -28,7 +28,7 @@ std::string Channel::getModes() const {
 	if (_modeInvite)	modes += "i";
 	if (_modeTopic)		modes += "t";
 	if (_modeKey)		modes += "k";
-	//if (_modeLimit)		modes += "l";
+	if (_modeLimit)		modes += "l";
 	//if(_modeOp)			modes += "o";
 
 	return modes;

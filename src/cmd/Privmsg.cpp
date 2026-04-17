@@ -7,7 +7,7 @@ void Server::cmd_privmsg(int fd, std::vector<std::string> args)
 
 	// 1. Validação: Precisa de alvo e mensagem
 	if (args.size() < 2) {
-		send_rpl(ERR_NEEDMOREPARAMS(nick, "PRIVMSG"), fd);
+		send_rpl(ERR_NORECIPIENT(nick, "PRIVMSG"), fd);
 		return ;
 	}
 	if (args.size() < 3) {

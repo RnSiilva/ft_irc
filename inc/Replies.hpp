@@ -19,7 +19,7 @@
 // RPL_NOTOPIC (331) - Quando o canal não tem assunto definido
 #define RPL_NOTOPIC(nick, channel) ":ircserv 331 " + nick + " " + channel + " :No topic is set\r\n"
 
-
+#define RPL_CHANNELMODEIS(nick, channel, mode, mode_params) ":ircserv 324 " + nick + " " + channel + " +" + mode + mode_params + "\r\n"
 
 
 // ERR
@@ -57,4 +57,5 @@
 
 #define ERR_UNKNOWNMODE(nick, mode) ":ircserv 472 " + nick + " " + mode + " :is unknown mode char to me\r\n"
 
+#define ERR_NORECIPIENT(nick, cmd) "411 " + nick + " :No recipient given " + cmd + "\r\n"
 #endif
