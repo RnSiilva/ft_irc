@@ -240,14 +240,23 @@ void Server::recvData(int fd)
 	if (!client) // Segurança extra: se o cliente não existir no mapa, pare aqui.
 		return ;
     client->append_buffer(buff);
-
-    std::string &buf = client->get_buffer();
-    size_t pos;
-
-    while ((pos = buf.find("\r\n")) != std::string::npos)
+    
+    while (true)
     {
+        // Revalidar cliente a cada iteração
+        client = get_client(fd);
+        if (!client)
+            return;
+
+        std::string& buf = client->get_buffer();
+
+        size_t pos = buf.find("\r\n");
+        if (pos == std::string::npos)
+            break;
+
         std::string cmd = buf.substr(0, pos);
         buf.erase(0, pos + 2);
+
         if (!cmd.empty())
             handle_cmd(cmd, fd);
     }
