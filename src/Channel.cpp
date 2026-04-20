@@ -1,20 +1,75 @@
 #include "../inc/Channel.hpp"
 
-Channel::Channel(std::string name) : _name(name), _topic(""), _password(""),
-    _limit(0), mode_i(false), mode_t(false) {}
+Channel::Channel(std::string name) :
+	_name(name), _topic(""), _key(""), _limit(0),
+	_modeInvite(false), _modeTopic(false), _modeKey(false),
+	_modeLimit(false) {}
 
 Channel::~Channel() {}
 
 // ============ GETTERS ============
 std::string Channel::getName() const	{ return _name; }
 std::string Channel::getTopic() const	{ return _topic; }
-//std::string Channel::get_password()        { return _password; }
-//int         Channel::get_user_limit() { return user_limit; }
-// bool        Channel::get_mode_i()		{ return mode_i; }
-// bool        Channel::get_mode_t()		{ return mode_t; }
-// bool        Channel::get_mode_k()		{ return mode_k; }
-// bool        Channel::get_mode_l()		{ return mode_l; }
+std::string Channel::getKey() const		{ return _key; }
+size_t		Channel::getLimit() const	{ return _limit; }
 
+bool		Channel::hasMode(char mode) const {
+	if (mode == 'i') return _modeInvite;
+	if (mode == 't') return _modeTopic;
+	if (mode == 'k') return _modeKey;
+	if (mode == 'l') return _modeLimit;
+	//if (mode == 'o') return _modeOp;
+
+	return false;
+}
+
+std::string Channel::getModes() const {
+	std::string modes = "";
+	if (_modeInvite)	modes += "i";
+	if (_modeTopic)		modes += "t";
+	if (_modeKey)		modes += "k";
+	if (_modeLimit)		modes += "l";
+	//if(_modeOp)			modes += "o";
+
+	return modes;
+}
+
+// ============ SETTERS ============
+void Channel::setTopic(std::string t)	{ _topic = t; }
+void Channel::setKey(std::string k)		{ _key = k; }
+void Channel::setLimit(size_t l)			{ _limit = l; }
+
+void Channel::setModeInvite(bool val)		{ _modeInvite = val; }
+void Channel::setModeTopic(bool val)		{ _modeTopic = val; }
+void Channel::setModeKey(bool val)			{ _modeKey = val; }
+void Channel::setModeLimit(bool val)      { _modeLimit = val; }
+
+// // ============ MEMBER MANAGEMENT ============
+void Channel::addInvite(int fd)
+{
+    if (!isInvited(fd))
+        _invitedFds.push_back(fd);
+}
+
+bool Channel::isInvited(int fd)
+{
+    for (size_t i = 0; i < _invitedFds.size(); i++)
+        if (_invitedFds[i] == fd)
+            return true;
+    return false;
+}
+
+void Channel::removeInvite(int fd)
+{
+    for (std::vector<int>::iterator it = _invitedFds.begin(); it != _invitedFds.end(); ++it)
+    {
+        if (*it == fd)
+        {
+            _invitedFds.erase(it);
+            break;
+        }
+    }
+}
 // --- Gestão de Membros ---
 void Channel::addMember(Client *client)
 {
@@ -113,55 +168,16 @@ std::string Channel::getMemberList()
     return list;
 }
 
-// // ============================================================
-
-// // ============ SETTERS ============
-void Channel::setTopic(std::string t)  { _topic = t; }
-// void Channel::set_key(std::string k)    { key = k; }
-// void Channel::set_user_limit(int limit) { user_limit = limit; }
-// void Channel::set_mode_i(bool val)      { mode_i = val; }
-// void Channel::set_mode_t(bool val)      { mode_t = val; }
-// void Channel::set_mode_k(bool val)      { mode_k = val; }
-// void Channel::set_mode_l(bool val)      { mode_l = val; }
-
-// // ============ MEMBER MANAGEMENT ============
-void Channel::addInvite(int fd)
+int Channel::checkCanJoin(Client *client, std::string provided_key)
 {
-    if (!isInvited(fd))
-        _invitedFds.push_back(fd);
+	if (this->hasMode('i') && !this->isInvited(client->get_clientfd()))
+		return (473);
+	
+	if (this->hasMode('k') && provided_key != this->_key)
+        return (475);
+
+    if (this->hasMode('l') && _members.size() >= _limit)
+        return (471);
+
+    return 0; // Sucesso
 }
-
-bool Channel::isInvited(int fd)
-{
-    for (size_t i = 0; i < _invitedFds.size(); i++)
-        if (_invitedFds[i] == fd)
-            return true;
-    return false;
-}
-
-void Channel::removeInvite(int fd)
-{
-    for (std::vector<int>::iterator it = _invitedFds.begin(); it != _invitedFds.end(); ++it)
-    {
-        if (*it == fd)
-        {
-            _invitedFds.erase(it);
-            break;
-        }
-    }
-}
-
-// // ============ CHECKS ============
-// bool Channel::is_member(Client *client) // isClientInChannel
-// {
-//     for (size_t i = 0; i < members.size(); i++)
-//         if (members[i] == client)
-//             return true;
-//     return false;
-// }
-
-// bool Channel::is_empty()
-// {
-//     return members.empty();
-// }
-

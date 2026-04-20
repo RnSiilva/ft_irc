@@ -49,7 +49,6 @@ void Server::cmd_nick(int fd, std::vector<std::string> args)
 
     client->set_nick(args[1]);
     std::string msg = ":" + nick + "!" + client->get_user() + "@" + client->get_host() + " NICK " + args[1] + "\r\n";
-    send_rpl(msg, fd);
 
     if (!client->get_user().empty() && !client->get_registered())
     {
