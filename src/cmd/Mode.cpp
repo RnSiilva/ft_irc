@@ -60,31 +60,16 @@ void Server::cmd_mode(int fd, std::vector<std::string> args)
 	std::string modes = args[2];
 	size_t param_idx = 3; // Os parâmetros extras (se houver)
 	bool adding = true; // Controla se estamos em modo + ou -
+	bool hasSignal = false;
 	std::string changesStr = ""; // Para o broadcast final
 	std::string paramsStr = "";
 
 	for (size_t i = 0; i < modes.length(); i++) {
 		char c = modes[i];
-		if (c == '+') { adding = true; continue; }
-		if (c == '-') { adding = false; continue; }
+		if (c == '+') { adding = true; hasSignal = true; continue; }
+		if (c == '-') { adding = false; hasSignal = true; continue; }
 
-		// if (c == 'i' || c == 't' || c == 'k') {
-		// 	// Adiciona o sinal apenas se ele mudou ou se é a primeira flag
-		// 	char symbol = (adding ? '+' : '-');
-		// 	// if (changesStr.empty() || changesStr[changesStr.length() - 1] != symbol) {
-		// 	// 	changesStr += symbol;
-		// 	// }
-		// 	if (changesStr.find(symbol) == std::string::npos || (i > 0 && modes[i-1] != '+' && modes[i-1] != '-'))
-		// 		changesStr += symbol;
-			
-		// 	changesStr += c;
-		// }
-
-		// if (i == 0 && c != '+' && c != '-') {
-		// 	send_rpl(ERR_UNKNOWNMODE(nick, c), fd);
-		// 	continue;
-		// }
-		if (modes[0] != '+' && modes[0] != '-') {
+		if (!hasSignal) {
 			send_rpl(ERR_UNKNOWNMODE(nick, c), fd);
 			continue;
 		}
@@ -131,7 +116,7 @@ void Server::cmd_mode(int fd, std::vector<std::string> args)
 					// Só muda se o limite for diferente do atual
 					int newLimit = std::atoi(val.c_str());
 					if (newLimit == 0) {
-						send_rpl(ERR_NEEDMOREPARAMS(nick, "MODE +l"), fd);
+						send_rpl(ERR_INVALIDMODEPARAM(nick, target, "+l", val), fd);
 						continue ;
 					}
 					else if (newLimit > 0 && (size_t)newLimit != chan.getLimit()) {
