@@ -3,8 +3,6 @@
 void	Server::cmd_join(int fd, std::vector<std::string> args)
 {
 	Client *client = get_client(fd);
-	// if (!client)
-	// 	return;
 	std::string nick = client->get_nick();
 
 	if (args.size() < 2) {

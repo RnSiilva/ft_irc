@@ -18,7 +18,6 @@ bool		Channel::hasMode(char mode) const {
 	if (mode == 't') return _modeTopic;
 	if (mode == 'k') return _modeKey;
 	if (mode == 'l') return _modeLimit;
-	//if (mode == 'o') return _modeOp;
 
 	return false;
 }
@@ -29,7 +28,6 @@ std::string Channel::getModes() const {
 	if (_modeTopic)		modes += "t";
 	if (_modeKey)		modes += "k";
 	if (_modeLimit)		modes += "l";
-	//if(_modeOp)			modes += "o";
 
 	return modes;
 }
@@ -92,7 +90,6 @@ void Channel::removeMember(int fd)
 	// Garante que também seja removido da lista de operadores se estiver lá
     // If they leave, they also lose op and invite status
     removeOperator(fd);
-    //remove_invited(client);
 
 	// Nova Regra: Se a lista de operadores ficou vazia MAS ainda há membros...
 	if (_operators.empty() && !_members.empty()) {
@@ -179,5 +176,5 @@ int Channel::checkCanJoin(Client *client, std::string provided_key)
     if (this->hasMode('l') && _members.size() >= _limit)
         return (471);
 
-    return 0; // Sucesso
+    return 0;
 }

@@ -17,7 +17,6 @@ static void updateAppliedChanges(std::string &changes, bool adding, char mode)
 void Server::cmd_mode(int fd, std::vector<std::string> args)
 {
 	Client *client = get_client(fd);
-	//if (!client) return;
 	std::string nick = client->get_nick();
 
 	if (args.size() < 2) {
@@ -98,7 +97,6 @@ void Server::cmd_mode(int fd, std::vector<std::string> args)
 					}
 				} else {
 					send_rpl(ERR_NEEDMOREPARAMS(nick, "MODE +k"), fd);
-					//changesStr.erase(changesStr.end() -1);
 					continue ;
 				}
 			} else {
