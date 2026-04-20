@@ -39,7 +39,6 @@ class Server {
         struct sockaddr_in client_addr;
         std::vector<struct pollfd> fd_poll;
 
-        //std::vector<Client> clients;
 		std::map<int, Client> clients;
         std::map<std::string, Channel> _channels;
     public:
@@ -85,8 +84,6 @@ class Server {
 		void createChannel(const std::string &name, Client *owner);
 		void sendJoinError(int fd, int code, const std::string &chanName, const std::string &nick);
 		void executeJoinActions(Client* client, Channel &chan, const std::string &nick, int fd);
-		
-		//Channel *get_channel(std::string name);
 };
 
 std::vector<std::string> split_cmd(std::string &cmd);

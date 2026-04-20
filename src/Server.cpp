@@ -30,12 +30,6 @@ void Server::initHostname()
 
 Client *Server::get_client(int fd)
 { 
-    // for (size_t i = 0; i < clients.size(); i++)
-    // {
-	// 	if (clients[i].get_clientfd() == fd)
-	// 		return &clients[i];
-	// }
-	// return NULL;
 	std::map<int, Client>::iterator it = clients.find(fd);
 	if (it != clients.end())
 		return &(it->second); // Retorna o endereço do Client encontrado
@@ -98,16 +92,6 @@ void Server::executeJoinActions(Client* client, Channel &chan, const std::string
     send_rpl(RPL_NAMREPLY(nick, chanName, chan.getMemberList()), fd);
     send_rpl(RPL_ENDOFNAMES(nick, chanName), fd);
 }
-
-// Channel *Server::get_channel(std::string name)
-// {
-//     for (size_t i = 0; i < channels.size(); i++)
-//     {
-//         if (channels[i].get_name() == name)
-//             return &channels[i];
-//     }
-//     return NULL;
-// }
 
 // ============ SERVER CONFIGURATION ============ 
 
@@ -203,7 +187,6 @@ void Server::accept_client(void)
     client.set_clientfd(fd);
     client.set_host(inet_ntoa(client_addr.sin_addr));
 
-    //clients.push_back(client);
 	clients[fd] = client;
 
     new_client.fd = fd;
@@ -226,15 +209,6 @@ void Server::recvData(int fd)
         disconnect_client(fd, "Connection lost");
         return;
 	}
-
-	// if (bytes <= 0)
-    // {
-    //     std::cout << "Client " << fd << " disconnected" << std::endl;
-    //     remove_client(fd);
-    //     close(fd);
-    //     return;
-    // }
-
 
     Client *client = get_client(fd);
 	if (!client) // Segurança extra: se o cliente não existir no mapa, pare aqui.
@@ -300,10 +274,7 @@ void Server::handle_cmd(std::string &cmd, int fd)
 		cmd_mode(fd, args);
 
     else if (client->get_registered())
-    {
-        // Implement commands...
         send_rpl(ERR_UNKNOWNCOMMAND(nick, args[0]), fd);
-    }
     else
         send_rpl(ERR_NOTREGISTERED(nick), fd);
 }

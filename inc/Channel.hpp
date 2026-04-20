@@ -35,10 +35,6 @@ class Channel {
 		std::string		getModes() const;
 
         std::string		getName() const;
-        // int         get_user_limit();
-        // bool        get_mode_i();
-        // bool        get_mode_t();
-        // bool        get_mode_l();
 
 		// --- Setters de Modo (Os "Interruptores") ---
 		void setModeInvite(bool val);
@@ -64,7 +60,6 @@ class Channel {
 		// Getters para os vetores (úteis para comandos como NAMES)
         const std::vector<Client *> &getMembers() const;
 
-		
         // // Member management
         void addInvite(int fd);
         void removeInvite(int fd);
@@ -76,11 +71,6 @@ class Channel {
 		// Utils
         std::string getMemberList();
 		int checkCanJoin(Client *client, std::string provided_key);
-	
-        // Checks
-        // bool is_member(Client *client);
-        // bool is_empty();
-
 };
 
 #endif

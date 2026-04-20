@@ -45,12 +45,6 @@ bool invalid_nick(std::string &nick)
 
 bool Server::nick_in_use(std::string &nick)
 {
-    // for (size_t i = 0; i < clients.size(); i++)
-    // {
-    //     if (clients[i].get_nick() == nick)
-    //         return true;
-    // }
-    // return false;
 	for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
 	{
 		if (it->second.get_nick() == nick) // it->second acessa o objeto Client
@@ -70,22 +64,12 @@ void Server::remove_client(int fd)
         }
 	}
 
-	// for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it)
-    // {
-    //     if (it->get_clientfd() == fd)
-    //     {
-    //         clients.erase(it);
-    //         break;
-    //     }
-    // }
 	clients.erase(fd);
 }
 
 void Server::close_fd()
 {
 	//-> close all the clients
-	// for (size_t i = 0; i < clients.size(); i++) 
-    //     close(clients[i].get_clientfd());
 	for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
     	close(it->first); // it->first é o FD (a chave do mapa)
 

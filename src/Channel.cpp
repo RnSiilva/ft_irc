@@ -181,22 +181,3 @@ int Channel::checkCanJoin(Client *client, std::string provided_key)
 
     return 0; // Sucesso
 }
-
-// // ============================================================
-
-
-
-// // ============ CHECKS ============
-// bool Channel::is_member(Client *client) // isClientInChannel
-// {
-//     for (size_t i = 0; i < members.size(); i++)
-//         if (members[i] == client)
-//             return true;
-//     return false;
-// }
-
-// bool Channel::is_empty()
-// {
-//     return members.empty();
-// }
-
